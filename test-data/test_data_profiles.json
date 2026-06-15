@@ -1,0 +1,278 @@
+[
+  {
+    "id": 111,
+    "testDataName": "Encompass_Details",
+    "data": [
+      {
+        "UserID": "admin",
+        "Stage2_Environment": "https://encompassloconnect.com/",
+        "ID": "BE11172531",
+        "Password": "AHWIBAXWAI"
+      }
+    ]
+  },
+  {
+    "id": 107,
+    "testDataName": "Regression Sheet Details 2 [Loan Pricing]",
+    "data": [
+      {
+        "UserName": "test sigma lock2",
+        "Loan Officer User": "LoanOfficer2 TestSigma",
+        "Stage2_Environment": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Loan Amount Value": "400,000",
+        "Purchase Price Value": "500,000",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Lock Desk User": "LoanOfficer2 TestSigma",
+        "lockdeskuser": "test sigma lock2",
+        "Subordinate Mortgage Value": "55000",
+        "password": "qa@Lp2024!",
+        "UserID": "admin",
+        "ID": "BE11172531",
+        "Password": "AHWIBAXWAI"
+      },
+      {
+        "UserName": "testsigmaloan2",
+        "Loan Officer User": "LoanOfficer2 TestSigma",
+        "Stage2_Environment": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Loan Amount Value": "580,000",
+        "Purchase Price Value": "600,000",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Lock Desk User": "German LO",
+        "lockdeskuser": "test sigma lock2",
+        "Subordinate Mortgage Value": "48000",
+        "password": "qa@Lp2024!",
+        "UserID": "",
+        "ID": "",
+        "Password": ""
+      },
+      {
+        "UserName": "TESTSIGMALOCK",
+        "Loan Officer User": "",
+        "Stage2_Environment": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Loan Amount Value": "",
+        "Purchase Price Value": "",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Lock Desk User": "cfam LO",
+        "lockdeskuser": "TESTSIGMALOCK",
+        "Subordinate Mortgage Value": "",
+        "password": "qa@Lp2024!",
+        "UserID": "",
+        "ID": "",
+        "Password": ""
+      },
+      {
+        "UserName": "testsigmaloan",
+        "Loan Officer User": "",
+        "Stage2_Environment": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Loan Amount Value": "",
+        "Purchase Price Value": "",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Lock Desk User": "",
+        "lockdeskuser": "TESTSIGMALOCK",
+        "Subordinate Mortgage Value": "",
+        "password": "qa@Lp2024!",
+        "UserID": "",
+        "ID": "",
+        "Password": ""
+      }
+    ]
+  },
+  {
+    "id": 99,
+    "testDataName": "Regression Sheet Details1 [Quick Pricer]",
+    "createdById": 31,
+    "updatedById": 31,
+    "data": [
+      {
+        "password": "qa@Lp2024!",
+        "UserName": "testsigmalock",
+        "Zip code 1": "91106",
+        "Zip code 2": "10001",
+        "URL": "https://ppe-stg-ext.cre8techdev.com/#/login",
+        "PRICING-COMPARISON PDF": "PRICING-COMPARISON.PDF",
+        "PRICING-COMPARISON PDF2": "SendPricingComparison"
+      },
+      {
+        "password": "qa@Lp2024!",
+        "UserName": "testsigmaloan",
+        "Zip code 1": "91106",
+        "Zip code 2": "10001",
+        "URL": "https://ppe-stg-ext.cre8techdev.com/#/login",
+        "PRICING-COMPARISON PDF": "",
+        "PRICING-COMPARISON PDF2": ""
+      }
+    ]
+  },
+  {
+    "id": 99,
+    "testDataName": "Quick Pricer Loan Officer",
+    "createdById": 31,
+    "updatedById": 31,
+    "data": [
+      {
+        "password": "qa@Lp2024!",
+        "UserName": "testsigmalock",
+        "Zip code 1": "91106",
+        "Zip code 2": "10001",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "PRICING-COMPARISON PDF": "PRICING-COMPARISON.PDF",
+        "PRICING-COMPARISON PDF2": "SendPricingComparison"
+      }
+    ]
+  },
+  {
+    "id": 99,
+    "testDataName": "Loan Pricer-Auto Lock policy",
+    "createdById": 31,
+    "updatedById": 31,
+    "data": [
+      {
+        "UserName": "TESTSIGMALOCK",
+        "password": "qa@Lp2024!",
+        "Zip code 1": "91106",
+        "Zip code 2": "10001",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "PRICING-COMPARISON PDF": "PRICING-COMPARISON.PDF",
+        "PRICING-COMPARISON PDF2": "SendPricingComparison",
+        "Stage2_Environment": "https://ppe-stg2-ext.cre8techdev.com/#/login"
+      },
+      {
+        "UserName": "testsigmaloan",
+        "password": "qa@Lp2024!",
+        "Zip code 1": "91106",
+        "Zip code 2": "10001",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "PRICING-COMPARISON PDF": "",
+        "PRICING-COMPARISON PDF2": "",
+        "Stage2_Environment": "https://ppe-stg2-ext.cre8techdev.com/#/login"
+      }
+    ]
+  },
+  {
+    "id": 99,
+    "testDataName": "Loan Pricer-Manual Lock policy",
+    "createdById": 31,
+    "updatedById": 31,
+    "data": [
+      {
+        "UserName": "test sigma lock2",
+        "password": "qa@Lp2024!",
+        "Zip code 1": "91106",
+        "Zip code 2": "10001",
+        "Loan Amount Value": "400,000",
+        "Purchase Price Value": "500,000",
+        "Loan Officer User": "LoanOfficer2 TestSigma",
+        "Lock Desk User": "LoanOfficer2 TestSigma",
+        "lockdeskuser": "test sigma lock2",
+        "Subordinate Mortgage Value": "55000",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Stage2_Environment": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "PRICING-COMPARISON PDF": "PRICING-COMPARISON.PDF",
+        "PRICING-COMPARISON PDF2": "SendPricingComparison"
+      },
+      {
+        "UserName": "testsigmaloan2",
+        "password": "qa@Lp2024!",
+        "Zip code 1": "91106",
+        "Zip code 2": "10001",
+        "Loan Amount Value": "580,000",
+        "Purchase Price Value": "600,000",
+        "Loan Officer User": "LoanOfficer2 TestSigma",
+        "Lock Desk User": "German LO",
+        "lockdeskuser": "test sigma lock2",
+        "Subordinate Mortgage Value": "48000",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Stage2_Environment": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "PRICING-COMPARISON PDF": "",
+        "PRICING-COMPARISON PDF2": ""
+      }
+    ]
+  },
+  {
+    "id": 107,
+    "testDataName": "Loan Pricing-Manual Lock policy",
+    "data": [
+      {
+        "UserName": "TESTSIGMALOCK",
+        "Loan Officer User": "",
+        "Stage2_Environment": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Loan Amount Value": "",
+        "Purchase Price Value": "",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Lock Desk User": "cfam LO",
+        "lockdeskuser": "TESTSIGMALOCK",
+        "Subordinate Mortgage Value": "",
+        "password": "qa@Lp2024!",
+        "UserID": "",
+        "ID": "",
+        "Password": ""
+      },
+      {
+        "UserName": "testsigmaloan",
+        "Loan Officer User": "",
+        "Stage2_Environment": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Loan Amount Value": "",
+        "Purchase Price Value": "",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Lock Desk User": "",
+        "lockdeskuser": "TESTSIGMALOCK",
+        "Subordinate Mortgage Value": "",
+        "password": "qa@Lp2024!",
+        "UserID": "",
+        "ID": "",
+        "Password": ""
+      }
+    ]
+  },
+    {
+    "id": 107,
+    "testDataName": "Loan Pricing1-Manual Lock policy",
+    "data": [
+      {
+        "UserName": "testsigmaloan",
+        "Loan Officer User": "",
+        "Stage2_Environment": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Loan Amount Value": "",
+        "Purchase Price Value": "",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Lock Desk User": "",
+        "lockdeskuser": "TESTSIGMALOCK",
+        "Subordinate Mortgage Value": "",
+        "password": "qa@Lp2024!",
+        "UserID": "",
+        "ID": "",
+        "Password": ""
+      },
+      {
+        "UserName": "TESTSIGMALOCK",
+        "Loan Officer User": "",
+        "Stage2_Environment": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Loan Amount Value": "",
+        "Purchase Price Value": "",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "Lock Desk User": "cfam LO",
+        "lockdeskuser": "TESTSIGMALOCK",
+        "Subordinate Mortgage Value": "",
+        "password": "qa@Lp2024!",
+        "UserID": "",
+        "ID": "",
+        "Password": ""
+      }
+    ]
+  },
+  {
+    "testDataName": "Loan Pricer-Auto Lock policy LD",
+    "data": [
+      {
+        "UserName": "TESTSIGMALOCK",
+        "password": "qa@Lp2024!",
+        "Zip code 1": "91106",
+        "Zip code 2": "10001",
+        "URL": "https://ppe-stg2-ext.cre8techdev.com/#/login",
+        "PRICING-COMPARISON PDF": "PRICING-COMPARISON.PDF",
+        "PRICING-COMPARISON PDF2": "SendPricingComparison",
+        "Stage2_Environment": "https://ppe-stg2-ext.cre8techdev.com/#/login"
+      }
+    ]
+  }
+]
