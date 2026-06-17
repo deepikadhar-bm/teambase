@@ -4,7 +4,7 @@
 // PURPOSE:
 //   Unified wait handlers for Playwright tests.
 //   Provides clean log output with smart element names (auto-labeling).
-//   Designed for highly dynamic UIs (React, Bluecopa Canvas, SPA redirects).
+//   Designed for highly dynamic UIs (React,  Canvas, SPA redirects).
 //
 // FEATURES:
 //   ✔ Smart label extractor (clean logs like "Wait → Apply Button")
@@ -21,13 +21,13 @@
 //
 // WHEN TO USE:
 //   - Before interacting with dynamic elements
-//   - Waiting for Bluecopa spinners / toast messages to disappear
+//   - Waiting for spinners / toast messages to disappear
 //   - Waiting for navigation or data refresh
 //   - Polling text in a table or notification message
 // ============================================================================
 
 import { Locator, Page, expect } from "@playwright/test";
-import { logger } from "./logger";
+import { logger } from "../helpers/logger";
 import { Global_Timeout } from "../config/globalTimeout";
 
 export class WaitUtils {
@@ -128,7 +128,7 @@ export class WaitUtils {
    * Waits until an element becomes hidden or removed.
    *
    * WHEN TO USE:
-   * - Bluecopa ⚡ spinners / loaders
+   * - spinners / loaders
    * - Toast notifications that auto-hide
    * - Waiting for transitions (modals closing)
    *

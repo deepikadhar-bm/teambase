@@ -1,9 +1,10 @@
 // ============================================================================
-// ELEMENT UTILS - ENTERPRISE VERSION
+// ELEMENT UTILS - ENTERPRISE VERSION WITH PLAYWRIGHT SMART HEALING
 // ----------------------------------------------------------------------------
 // FEATURES:
 // ✔ Smart label extraction for clean logs
 // ✔ Advanced retry with backoff (via RetryUtils)
+// ✔ AUTO-HEAL — lightweight runtime DOM recovery on locator failure
 // ✔ Bluecopa Workflow Canvas fallback (boundingBox click)
 // ✔ Scroll-into-view safety
 // ✔ Unified behavior for all PageObject actions
@@ -13,7 +14,18 @@
 // Central place for ALL element-level interactions.
 // BasePage delegates EVERYTHING here.
 //
-// HOW TO USE IN PAGE OBJECT:
+// HOW AUTO-HEAL WORKS:
+// --------------------------------
+// Original locator is checked first. If it is not visible, the framework tries
+// Playwright-native recovery strategies in order: role, label, placeholder,
+// text, CSS, XPath. The recovery layer is stateless.
+//
+// ZERO CHANGES NEEDED IN:
+// ✔ BasePage.ts   — unchanged
+// ✔ Page Objects  — unchanged
+// ✔ Test files    — unchanged
+//
+// HOW TO USE IN PAGE OBJECT (same as before — nothing changes):
 // --------------------------------
 // class LoginPage extends BasePage {
 //   username = this.page.locator('#username');
@@ -35,7 +47,8 @@
 import { Locator } from "@playwright/test";
 import { RetryUtils, RetryOptions } from "./retryUtils";
 import { Global_Timeout } from "../config/globalTimeout";
-import { logger } from "./logger";
+import { logger } from "../helpers/logger";
+import { autoHeal } from "./autoHeal";
 
 export class ElementUtils {
 
@@ -49,9 +62,6 @@ export class ElementUtils {
    * - Extracts meaningful text from xpath/text()/normalize-space()
    * - Falls back to getByText/getByRole/aria-label/title/placeholder
    * - If nothing found → returns trimmed locator string
-   *
-   * WHEN TO USE:
-   * - Always used automatically; no need to call manually
    *
    * @param locator Playwright Locator
    * @param custom Optional custom label override
@@ -70,7 +80,7 @@ export class ElementUtils {
       /getByText\('([^']+)'/,
       /@aria-label="([^"]+)"/,
       /@placeholder="([^"]+)"/,
-      /@title="([^"]+)"/
+      /@title="([^"]+)"/,
     ];
 
     for (const p of patterns) {
@@ -83,19 +93,21 @@ export class ElementUtils {
   }
 
   // ============================================================================
-  // CLICK (WITH BLUECOPA CANVAS FIX)
+  // CLICK (WITH AUTO-HEAL +  CANVAS FIX)
   // ----------------------------------------------------------------------------
   /**
    * Clicks the element, safely + reliably.
    *
    * HOW IT WORKS:
-   * 1) Waits for visible
-   * 2) Scrolls into view
-   * 3) Attempts normal locator.click()
-   * 4) If blocked by Svelte Canvas edges → performs boundingBox() click
+   * 1) autoHeal() — tries primary, then runtime DOM recovery if needed
+   * 2) Waits for visible on healed locator
+   * 3) Scrolls into view
+   * 4) Attempts normal locator.click()
+   * 5) If blocked by Svelte Canvas edges → performs boundingBox() click
    *
    * WHEN TO USE:
    * - For ANY click operation in any page object
+   * - Auto-heals if locator fails due to UI change
    * - Automatically fixes Bluecopa canvas click failures
    *
    * @example
@@ -110,33 +122,40 @@ export class ElementUtils {
       retryOptions?: RetryOptions;
     }
   ) {
-    const label = options?.label || this.resolveLabel(locator);
+    const label   = options?.label || this.resolveLabel(locator);
     const timeout = options?.timeout || Global_Timeout.action;
 
     await RetryUtils.retry(async () => {
 
+      // Auto-heal: try primary, then Playwright smart healing if needed.
+      const { locator: healed, healed: wasHealed, strategy } =
+        await autoHeal(locator, undefined, Math.min(timeout, 4000));
+
+      if (wasHealed) {
+        logger.warn(`[AutoHeal] click healed via [${strategy}] → ${label}`);
+      }
+
       logger.debug(`Click → ${label}`);
 
-      await locator.waitFor({ state: "visible", timeout });
+      await healed.waitFor({ state: "visible", timeout });
 
-      try { await locator.scrollIntoViewIfNeeded({ timeout: 4000 }); } catch {}
+      try { await healed.scrollIntoViewIfNeeded({ timeout: 4000 }); } catch {}
 
-      // --- Try normal click first ---
+      // ── Try normal click first ───────────────────────────────────────────
       try {
-        await locator.click({ timeout, force: options?.force || false });
+        await healed.click({ timeout, force: options?.force || false });
         return;
       } catch {
         logger.warn(`Normal click failed for → ${label}`);
         logger.warn(`Trying bounding-box fallback click...`);
       }
 
-      // --- Bluecopa canvas fallback ---
-      const box = await locator.boundingBox();
+      // ── Bluecopa canvas fallback ─────────────────────────────────────────
+      const box = await healed.boundingBox();
       if (!box) throw new Error(`Bounding box not found → ${label}`);
 
       logger.debug(`BoundingBoxClick → ${label}`);
-
-      await locator.page().mouse.click(
+      await healed.page().mouse.click(
         box.x + box.width / 2,
         box.y + box.height / 2
       );
@@ -157,7 +176,7 @@ export class ElementUtils {
     locator: Locator,
     options?: { timeout?: number; label?: string; retryOptions?: RetryOptions }
   ) {
-    const label = options?.label || this.resolveLabel(locator);
+    const label   = options?.label || this.resolveLabel(locator);
     const timeout = options?.timeout || Global_Timeout.action;
 
     await RetryUtils.retry(async () => {
@@ -172,7 +191,7 @@ export class ElementUtils {
   // RIGHT CLICK
   // ----------------------------------------------------------------------------
   /**
-   * Right-click on element (context menu)
+   * Right-click on element (context menu).
    */
   static async rightClick(
     locator: Locator,
@@ -187,41 +206,68 @@ export class ElementUtils {
   }
 
   // ============================================================================
-  // FILL (Instant fill)
+  // FILL (Instant fill) — WITH AUTO-HEAL
   // ----------------------------------------------------------------------------
   /**
    * Fills input instantly.
    *
+   * HOW IT WORKS:
+   * 1) autoHeal() — tries primary, then runtime DOM recovery if needed
+   * 2) Scrolls into view
+   * 3) Waits for visible
+   * 4) locator.fill(text)
+   *
    * WHEN TO USE:
    * - Normal inputs, name fields, etc.
    * - When key-by-key typing is not required
+   *
+   * @example
+   * await this.fill(this.emailInput, "user@example.com");
    */
   static async fill(
     locator: Locator,
     text: string,
     options?: { timeout?: number; label?: string; retryOptions?: RetryOptions }
   ) {
-    const label = options?.label || this.resolveLabel(locator);
+    const label   = options?.label || this.resolveLabel(locator);
     const timeout = options?.timeout || Global_Timeout.action;
 
     await RetryUtils.retry(async () => {
+
+      // Auto-heal: try primary, then Playwright smart healing if needed.
+      const { locator: healed, healed: wasHealed, strategy } =
+        await autoHeal(locator, undefined, Math.min(timeout, 4000));
+
+      if (wasHealed) {
+        logger.warn(`[AutoHeal] fill healed via [${strategy}] → ${label}`);
+      }
+
       logger.debug(`Fill → ${label} | ${text}`);
-      try { await locator.scrollIntoViewIfNeeded(); } catch {}
-      await locator.waitFor({ state: "visible", timeout });
-      await locator.fill(text, { timeout });
+      try { await healed.scrollIntoViewIfNeeded(); } catch {}
+      await healed.waitFor({ state: "visible", timeout });
+      await healed.fill(text, { timeout });
     }, options?.retryOptions);
   }
 
   // ============================================================================
-  // TYPE (slow typing, key-by-key)
+  // TYPE (slow typing, key-by-key) — WITH AUTO-HEAL
   // ----------------------------------------------------------------------------
   /**
-   * Types text key-by-key (fires keydown/keyup/input events)
+   * Types text key-by-key (fires keydown/keyup/input events).
+   *
+   * HOW IT WORKS:
+   * 1) autoHeal() — tries primary, then runtime DOM recovery if needed
+   * 2) Scrolls into view
+   * 3) Waits for visible
+   * 4) locator.pressSequentially(text, { delay })
    *
    * WHEN TO USE:
    * - Autocomplete inputs
    * - Search bars
    * - Inputs requiring typing events
+   *
+   * @example
+   * await this.type(this.citySearch, "Bangalore", { delay: 50 });
    */
   static async type(
     locator: Locator,
@@ -233,15 +279,24 @@ export class ElementUtils {
       retryOptions?: RetryOptions;
     }
   ) {
-    const label = options?.label || this.resolveLabel(locator);
+    const label   = options?.label || this.resolveLabel(locator);
     const timeout = options?.timeout || Global_Timeout.action;
-    const delay = options?.delay ?? 50;
+    const delay   = options?.delay ?? 50;
 
     await RetryUtils.retry(async () => {
+
+      // Auto-heal: try primary, then Playwright smart healing if needed.
+      const { locator: healed, healed: wasHealed, strategy } =
+        await autoHeal(locator, undefined, Math.min(timeout, 4000));
+
+      if (wasHealed) {
+        logger.warn(`[AutoHeal] type healed via [${strategy}] → ${label}`);
+      }
+
       logger.debug(`Type → ${label} | value="${text}"`);
-      try { await locator.scrollIntoViewIfNeeded(); } catch {}
-      await locator.waitFor({ state: "visible", timeout });
-      await locator.pressSequentially(text, { delay });
+      try { await healed.scrollIntoViewIfNeeded(); } catch {}
+      await healed.waitFor({ state: "visible", timeout });
+      await healed.pressSequentially(text, { delay });
     }, options?.retryOptions);
   }
 

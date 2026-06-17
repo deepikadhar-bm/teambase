@@ -8,10 +8,10 @@ import { ErrorHandler } from "../utils/errorHandler";
 import { RetryOptions } from "../utils/retryUtils";
 import { configManager } from "../config/env.index";
 import { Runtime } from "../utils/runtimeStore";
-import { logger as log } from "../../src/utils/logger";
-import { autoHeal } from "../../src/utils/autoHealing";
+import { logger as log } from "../helpers/logger";
+import { autoHeal } from "../utils/autoHeal";
 
-declare module "../../src/utils/logger" {
+declare module "../helpers/logger" {
   interface Logger {
     step(msg: string, data?: any): void;
   }
@@ -47,17 +47,17 @@ export class BasePage {
 
     if (visible) return locator.first();
 
-    // ✅ autoHeal — only fires when element genuinely not found
+    //  autoHeal — only fires when element genuinely not found
     log.warn(`[AutoHeal] "${name}" not visible after ${timeout}ms — attempting heal`);
     const { locator: healed, healed: wasHealed, strategy } =
       await autoHeal(locator, undefined, timeout);
 
     if (!wasHealed) {
-      log.error(`[AutoHeal] ❌ Failed → ${name}`);
+      log.error(`[AutoHeal]  Failed → ${name}`);
       throw new Error(`Element not found after autoHeal → ${name}`);
     }
 
-    log.warn(`[AutoHeal] ✅ Healed via [${strategy}] → ${name}`);
+    log.warn(`[AutoHeal]  Healed via [${strategy}] → ${name}`);
     return healed.first();
   }
 
@@ -187,7 +187,7 @@ export class BasePage {
   //  ELEMENT ACTIONS — all use resolveLocator (auto-wait + auto-heal)
   // ==========================================================================
 
-  // ✅ click
+  //  click
   // Example: await base.click(el.submitButton);
   async click(selector: string | Locator, options?: { force?: boolean; label?: string }): Promise<this> {
     const name = this.getElementName(selector, options?.label);
@@ -200,7 +200,7 @@ export class BasePage {
     }, { context: `BasePage.click (${name})` });
   }
 
-  // ✅ type — pressSequentially (simulates keyboard)
+  //  type — pressSequentially (simulates keyboard)
   // Example: await base.type(el.searchField, "Purchase Order");
   async type(selector: string | Locator, text: string, delay?: number, options?: { label?: string }): Promise<this> {
     const name = this.getElementName(selector, options?.label);
@@ -213,7 +213,7 @@ export class BasePage {
     }, { context: `BasePage.type (${name})` });
   }
 
-  // ✅ fill — sets value directly (faster than type, no keyboard simulation)
+  //  fill — sets value directly (faster than type, no keyboard simulation)
   // Example: await base.fill(el.emailInput, "user@test.com");
   async fill(selector: string | Locator, text: string, options?: { label?: string }): Promise<this> {
     const name = this.getElementName(selector, options?.label);
@@ -226,7 +226,7 @@ export class BasePage {
     }, { context: `BasePage.fill (${name})` });
   }
 
-  // ✅ clear — clears input field
+  //  clear — clears input field
   // Example: await base.clear(el.quantityTextbox);
   async clear(selector: string | Locator): Promise<this> {
     const name = this.getElementName(selector);
@@ -239,7 +239,7 @@ export class BasePage {
     }, { context: `BasePage.clear (${name})` });
   }
 
-  // ✅ hover — mouse over element
+  //  hover — mouse over element
   // Example: await base.hover(el.menuItem);
   async hover(selector: string | Locator): Promise<this> {
     const name = this.getElementName(selector);
@@ -252,7 +252,7 @@ export class BasePage {
     }, { context: `BasePage.hover (${name})` });
   }
 
-  // ✅ check — check a checkbox
+  //  check — check a checkbox
   // Example: await base.check(el.agreeCheckbox);
   async check(selector: string | Locator): Promise<this> {
     const name = this.getElementName(selector);
@@ -265,7 +265,7 @@ export class BasePage {
     }, { context: `BasePage.check (${name})` });
   }
 
-  // ✅ uncheck — uncheck a checkbox
+  //  uncheck — uncheck a checkbox
   // Example: await base.uncheck(el.notifyCheckbox);
   async uncheck(selector: string | Locator): Promise<this> {
     const name = this.getElementName(selector);
@@ -278,7 +278,7 @@ export class BasePage {
     }, { context: `BasePage.uncheck (${name})` });
   }
 
-  // ✅ press — press key on focused element
+  //  press — press key on focused element
   // Example: await base.press(el.searchField, "Enter");
   async press(selector: string | Locator, key: string): Promise<this> {
     const name = this.getElementName(selector);
@@ -291,7 +291,7 @@ export class BasePage {
     }, { context: `BasePage.press (${name})` });
   }
 
-  // ✅ focus — focus an element
+  //  focus — focus an element
   // Example: await base.focus(el.emailInput);
   async focus(selector: string | Locator): Promise<this> {
     const name = this.getElementName(selector);
@@ -304,7 +304,7 @@ export class BasePage {
     }, { context: `BasePage.focus (${name})` });
   }
 
-  // ✅ selectOption — select from native <select> dropdown
+  //  selectOption — select from native <select> dropdown
   // Example: await base.selectOption(el.countryDropdown, "India");
   async selectOption(selector: string | Locator, value: string | string[]): Promise<this> {
     const name = this.getElementName(selector);
@@ -317,7 +317,7 @@ export class BasePage {
     }, { context: `BasePage.selectOption (${name})` });
   }
 
-  // ✅ doubleClick
+  //  doubleClick
   // Example: await base.doubleClick(el.fileItem);
   async doubleClick(selector: string | Locator): Promise<this> {
     const name = this.getElementName(selector);
@@ -330,7 +330,7 @@ export class BasePage {
     }, { context: `BasePage.doubleClick (${name})` });
   }
 
-  // ✅ rightClick
+  //  rightClick
   // Example: await base.rightClick(el.tableRow);
   async rightClick(selector: string | Locator): Promise<this> {
     const name = this.getElementName(selector);
@@ -343,7 +343,7 @@ export class BasePage {
     }, { context: `BasePage.rightClick (${name})` });
   }
 
-  // ✅ dragAndDrop
+  //  dragAndDrop
   // Example: await base.dragAndDrop(el.sourceCard, el.targetColumn);
   async dragAndDrop(source: string | Locator, target: string | Locator): Promise<this> {
     const sn = this.getElementName(source), tn = this.getElementName(target);
@@ -361,7 +361,7 @@ export class BasePage {
   //  KEYBOARD & MOUSE — no resolveLocator (not element-specific)
   // ==========================================================================
 
-  // ✅ pressKey — keyboard press without element focus
+  //  pressKey — keyboard press without element focus
   // Example: await base.pressKey("Enter");
   //          await base.pressKey("Tab");
   //          await base.pressKey("Escape");
@@ -374,7 +374,7 @@ export class BasePage {
     }, { context: `BasePage.pressKey (${key})` });
   }
 
-  // ✅ typeText — type text without element (types at current focus)
+  //  typeText — type text without element (types at current focus)
   // Example: await base.typeText("Hello World");
   async typeText(text: string): Promise<this> {
     log.step(`Type text → "${text}"`);
@@ -385,7 +385,7 @@ export class BasePage {
     }, { context: "BasePage.typeText" });
   }
 
-  // ✅ mouseClick — click at exact coordinates
+  //  mouseClick — click at exact coordinates
   // Example: await base.mouseClick(250, 400);
   async mouseClick(x: number, y: number, button: "left" | "right" | "middle" = "left", clickCount = 1): Promise<this> {
     log.step(`Mouse click → x=${x}, y=${y}`);
@@ -396,7 +396,7 @@ export class BasePage {
     }, { context: `BasePage.mouseClick` });
   }
 
-  // ✅ mouseMove
+  //  mouseMove
   // Example: await base.mouseMove(100, 200);
   async mouseMove(x: number, y: number): Promise<this> {
     return ErrorHandler.handle<this>(async () => {
@@ -408,7 +408,7 @@ export class BasePage {
   //  NEW TAB
   // ==========================================================================
 
-  // ✅ clickAndGetNewTab — click link that opens new tab, return new page
+  //  clickAndGetNewTab — click link that opens new tab, return new page
   // Example: const newPage = await base.clickAndGetNewTab(el.openInNewTabLink);
   async clickAndGetNewTab(selector: string | Locator): Promise<Page> {
     const name = this.getElementName(selector);
@@ -425,7 +425,7 @@ export class BasePage {
     }, { context: `BasePage.clickAndGetNewTab` });
   }
 
-  // ✅ switchToTab — switch between open tabs by index
+  //  switchToTab — switch between open tabs by index
   // Example: const tab2 = await base.switchToTab(1);
   async switchToTab(index: number): Promise<Page> {
     log.step(`Switch to tab [${index}]`);
@@ -445,7 +445,7 @@ export class BasePage {
   //  WAIT METHODS
   // ==========================================================================
 
-  // ✅ waitForElementIsVisible — auto-heal on failure
+  //  waitForElementIsVisible — auto-heal on failure
   // Example: await base.waitForElementIsVisible(el.spinner);
   //          await base.waitForElementIsVisible(el.modal, 10000);
   async waitForElementIsVisible(selector: string | Locator, timeout?: number): Promise<this> {
@@ -463,14 +463,14 @@ export class BasePage {
       }
       const { locator: healed, healed: wasHealed, strategy } =
         await autoHeal(locator, undefined, waitTime);
-      if (wasHealed) log.warn(`[AutoHeal] ✅ Healed via [${strategy}] → ${name}`);
+      if (wasHealed) log.warn(`[AutoHeal]  Healed via [${strategy}] → ${name}`);
       await healed.first().waitFor({ state: "visible", timeout: waitTime });
       log.pass(`Visible (healed) → ${name}`);
       return this;
     }, { context: `BasePage.waitForElementIsVisible (${name})` });
   }
 
-  // ✅ waitForElementToDisappear — NO autoHeal (disappearing = correct)
+  //  waitForElementToDisappear — NO autoHeal (disappearing = correct)
   // Example: await base.waitForElementToDisappear(el.loadingSpinner);
   //          await base.waitForElementToDisappear(el.toast, 5000);
   async waitForElementToDisappear(selector: string | Locator, timeout?: number): Promise<this> {
@@ -478,14 +478,14 @@ export class BasePage {
     const waitTime = timeout || configManager.getTimeout("wait");
     log.step(`Wait disappear → ${name}`);
     return ErrorHandler.handle<this>(async () => {
-      // ❌ NO autoHeal here — element disappearing is CORRECT behaviour
+      //  NO autoHeal here — element disappearing is CORRECT behaviour
       await this.getLocator(selector).first().waitFor({ state: "hidden", timeout: waitTime });
       log.pass(`Disappeared → ${name}`);
       return this;
     }, { context: `BasePage.waitForElementToDisappear (${name})` });
   }
 
-  // ✅ waitForElementEnabled
+  //  waitForElementEnabled
   // Example: await base.waitForElementEnabled(el.submitButton);
   async waitForElementEnabled(selector: string | Locator): Promise<this> {
     const name = this.getElementName(selector);
@@ -497,7 +497,7 @@ export class BasePage {
     }, { context: `BasePage.waitForElementEnabled (${name})` });
   }
 
-  // ✅ waitForURL
+  //  waitForURL
   // Example: await base.waitForURL(/PO-[\w]+/);
   //          await base.waitForURL("https://example.com/dashboard");
   async waitForURL(url: string | RegExp): Promise<this> {
@@ -509,7 +509,7 @@ export class BasePage {
     }, { context: `BasePage.waitForURL` });
   }
 
-  // ✅ waitForLoadState
+  //  waitForLoadState
   // Example: await base.waitForLoadState("networkidle");
   //          await base.waitForLoadState("domcontentloaded");
   async waitForLoadState(state: "load" | "domcontentloaded" | "networkidle" = "load"): Promise<this> {
@@ -521,7 +521,7 @@ export class BasePage {
     }, { context: `BasePage.waitForLoadState` });
   }
 
-  // ✅ waitForTextOnPage
+  //  waitForTextOnPage
   // Example: await base.waitForTextOnPage("Saved successfully");
   async waitForTextOnPage(text: string | RegExp, timeout?: number): Promise<this> {
     const waitTime = timeout || configManager.getTimeout("wait");
@@ -533,7 +533,7 @@ export class BasePage {
     }, { context: `BasePage.waitForTextOnPage` });
   }
 
-  // ✅ waitForTextDisappear
+  //  waitForTextDisappear
   // Example: await base.waitForTextDisappear("Loading...");
   async waitForTextDisappear(text: string | RegExp, timeout?: number): Promise<this> {
     const waitTime = timeout || configManager.getTimeout("wait");
@@ -549,7 +549,7 @@ export class BasePage {
   //  ASSERTIONS
   // ==========================================================================
 
-  // ✅ assertElementVisible
+  //  assertElementVisible
   // Example: await base.assertElementVisible(el.successMessage);
   async assertElementVisible(selector: string | Locator): Promise<this> {
     const name = this.getElementName(selector);
@@ -560,7 +560,7 @@ export class BasePage {
     }, { context: `BasePage.assertElementVisible (${name})` });
   }
 
-  // ✅ assertElementHidden
+  //  assertElementHidden
   // Example: await base.assertElementHidden(el.errorMessage);
   async assertElementHidden(selector: string | Locator): Promise<this> {
     const name = this.getElementName(selector);
@@ -571,7 +571,7 @@ export class BasePage {
     }, { context: `BasePage.assertElementHidden (${name})` });
   }
 
-  // ✅ assertElementEnabled
+  //  assertElementEnabled
   // Example: await base.assertElementEnabled(el.saveButton);
   async assertElementEnabled(selector: string | Locator): Promise<this> {
     const name = this.getElementName(selector);
@@ -582,7 +582,7 @@ export class BasePage {
     }, { context: `BasePage.assertElementEnabled (${name})` });
   }
 
-  // ✅ assertElementDisabled
+  //  assertElementDisabled
   // Example: await base.assertElementDisabled(el.submitButton);
   async assertElementDisabled(selector: string | Locator): Promise<this> {
     const name = this.getElementName(selector);
@@ -593,7 +593,7 @@ export class BasePage {
     }, { context: `BasePage.assertElementDisabled (${name})` });
   }
 
-  // ✅ assertText — exact text match
+  //  assertText — exact text match
   // Example: await base.assertText(el.statusLabel, "Approved");
   async assertText(selector: string | Locator, text: string | RegExp): Promise<this> {
     const name = this.getElementName(selector);
@@ -604,7 +604,7 @@ export class BasePage {
     }, { context: `BasePage.assertText (${name})` });
   }
 
-  // ✅ assertContainsText — partial text match
+  //  assertContainsText — partial text match
   // Example: await base.assertContainsText(el.titleBar, "Purchase Order");
   async assertContainsText(selector: string | Locator, text: string): Promise<this> {
     const name = this.getElementName(selector);
@@ -615,7 +615,7 @@ export class BasePage {
     }, { context: `BasePage.assertContainsText (${name})` });
   }
 
-  // ✅ assertValue — input field value
+  //  assertValue — input field value
   // Example: await base.assertValue(el.quantityInput, "10");
   async assertValue(selector: string | Locator, value: string | RegExp): Promise<this> {
     const name = this.getElementName(selector);
@@ -626,7 +626,7 @@ export class BasePage {
     }, { context: `BasePage.assertValue (${name})` });
   }
 
-  // ✅ assertAttributeValue
+  //  assertAttributeValue
   // Example: await base.assertAttributeValue(el.checkbox, "checked", "true");
   async assertAttributeValue(selector: string | Locator, attribute: string, value: string): Promise<this> {
     const name = this.getElementName(selector);
@@ -637,7 +637,7 @@ export class BasePage {
     }, { context: `BasePage.assertAttributeValue (${name})` });
   }
 
-  // ✅ assertChecked / assertNotChecked
+  //  assertChecked / assertNotChecked
   // Example: await base.assertChecked(el.termsCheckbox);
   //          await base.assertNotChecked(el.newsletterCheckbox);
   async assertChecked(selector: string | Locator): Promise<this> {
@@ -656,7 +656,7 @@ export class BasePage {
     }, { context: `BasePage.assertNotChecked (${name})` });
   }
 
-  // ✅ assertURL / assertTitle / assertElementCount
+  //  assertURL / assertTitle / assertElementCount
   // Example: await base.assertURL(/dashboard/);
   //          await base.assertTitle("Home | MyApp");
   //          await base.assertElementCount(el.tableRows, 5);
@@ -682,7 +682,7 @@ export class BasePage {
     }, { context: `BasePage.assertElementCount (${name})` });
   }
 
-  // ✅ softAssertVisible / softAssertText — does NOT stop test on failure
+  //  softAssertVisible / softAssertText — does NOT stop test on failure
   // Example: await base.softAssertVisible(el.optionalBanner);
   //          await base.softAssertText(el.badge, "New");
   //          base.assertNoSoftErrors(); // call at end to throw all collected failures
@@ -720,28 +720,28 @@ export class BasePage {
   //  QUERY METHODS — NO autoHeal (read-only, instant checks)
   // ==========================================================================
 
-  // ✅ isVisible — returns true/false instantly, no wait, no heal
+  //  isVisible — returns true/false instantly, no wait, no heal
   // Example: if (await base.isVisible(el.closeButton)) { ... }
   async isVisible(selector: string | Locator): Promise<boolean> {
     try { return await this.getLocator(selector).first().isVisible(); }
     catch { return false; }
   }
 
-  // ✅ isEnabled — returns true/false instantly
+  //  isEnabled — returns true/false instantly
   // Example: if (await base.isEnabled(el.submitButton)) { ... }
   async isEnabled(selector: string | Locator): Promise<boolean> {
     try { return await this.getLocator(selector).first().isEnabled(); }
     catch { return false; }
   }
 
-  // ✅ isChecked — returns true/false instantly
+  //  isChecked — returns true/false instantly
   // Example: if (await base.isChecked(el.agreeBox)) { ... }
   async isChecked(selector: string | Locator): Promise<boolean> {
     try { return await this.getLocator(selector).first().isChecked(); }
     catch { return false; }
   }
 
-  // ✅ getText — gets text content, uses resolveLocator (element must be visible)
+  //  getText — gets text content, uses resolveLocator (element must be visible)
   // Example: const label = await base.getText(el.statusBadge);
   async getText(selector: string | Locator): Promise<string> {
     const name = this.getElementName(selector);
@@ -751,7 +751,7 @@ export class BasePage {
     }, { context: `BasePage.getText (${name})` });
   }
 
-  // ✅ getInputValue — gets current value of input field, NO autoHeal
+  //  getInputValue — gets current value of input field, NO autoHeal
   // Example: const qty = await base.getInputValue(el.quantityField);
   async getInputValue(selector: string | Locator): Promise<string> {
     const name = this.getElementName(selector);
@@ -760,7 +760,7 @@ export class BasePage {
     }, { context: `BasePage.getInputValue (${name})` });
   }
 
-  // ✅ getAttribute — gets element attribute, NO autoHeal
+  //  getAttribute — gets element attribute, NO autoHeal
   // Example: const href = await base.getAttribute(el.link, "href");
   async getAttribute(selector: string | Locator, attribute: string): Promise<string | null> {
     const name = this.getElementName(selector);
@@ -769,7 +769,7 @@ export class BasePage {
     }, { context: `BasePage.getAttribute (${name})` });
   }
 
-  // ✅ getElementCount — counts matching elements, NO autoHeal
+  //  getElementCount — counts matching elements, NO autoHeal
   // Example: const rows = await base.getElementCount(el.tableRows);
   async getElementCount(selector: string | Locator): Promise<number> {
     const name = this.getElementName(selector);
@@ -778,7 +778,7 @@ export class BasePage {
     }, { context: `BasePage.getElementCount (${name})` });
   }
 
-  // ✅ getDisabledFieldValue — reads value from disabled/read-only inputs via JS
+  //  getDisabledFieldValue — reads value from disabled/read-only inputs via JS
   // Example: const amount = await base.getDisabledFieldValue(el.amountField);
   async getDisabledFieldValue(selector: string | Locator): Promise<string> {
     const name = this.getElementName(selector);
@@ -799,7 +799,7 @@ export class BasePage {
   //  All return the stored value so it can be used inline
   // ==========================================================================
 
-  // ✅ storeText — reads text content → stores in Runtime → returns value
+  //  storeText — reads text content → stores in Runtime → returns value
   // Example: await base.storeText(el.orderName);
   //          await base.storeText(el.orderName, "OrderName");
   //          const name = await base.storeText(el.orderName);
@@ -816,7 +816,7 @@ export class BasePage {
     }, { context: `BasePage.storeText (${storeKey})` });
   }
 
-  // ✅ storeValue — reads input value → stores in Runtime → returns value
+  //  storeValue — reads input value → stores in Runtime → returns value
   // Example: await base.storeValue(el.quantityField);
   //          await base.storeValue(el.quantityField, "Quantity");
   //          const qty = await base.storeValue(el.quantityField);
@@ -831,7 +831,7 @@ export class BasePage {
     }, { context: `BasePage.storeValue (${storeKey})` });
   }
 
-  // ✅ storeCount — counts elements → stores in Runtime → returns count
+  //  storeCount — counts elements → stores in Runtime → returns count
   // Example: await base.storeCount(el.tableRows, "RowCount");
   //          const count = await base.storeCount(el.tableRows);
   async storeCount(selector: Locator | string, key?: string): Promise<number> {
@@ -845,7 +845,7 @@ export class BasePage {
     }, { context: `BasePage.storeCount (${storeKey})` });
   }
 
-  // ✅ storeAttribute — reads attribute → stores in Runtime → returns value
+  //  storeAttribute — reads attribute → stores in Runtime → returns value
   // Example: await base.storeAttribute(el.link, "href", "LinkURL");
   async storeAttribute(selector: Locator | string, attribute: string, key?: string): Promise<string> {
     const name = this.getElementName(selector);
@@ -862,7 +862,7 @@ export class BasePage {
   //  IF CONDITIONS — NO autoHeal (checking state, not interacting)
   // ==========================================================================
 
-  // ✅ ifVisible — run action if element is visible
+  //  ifVisible — run action if element is visible
   // Example: await base.ifVisible(el.alert, async () => {
   //              await base.click(el.closeAlert);
   //          });
@@ -874,7 +874,7 @@ export class BasePage {
     if (isVis) { await thenDo(); } else if (elseDo) { await elseDo(); }
   }
 
-  // ✅ ifNotVisible
+  //  ifNotVisible
   // Example: await base.ifNotVisible(el.submitBtn, async () => {
   //              log.warn("Submit not available");
   //          });
@@ -885,7 +885,7 @@ export class BasePage {
     if (!isVis) { await thenDo(); } else if (elseDo) { await elseDo(); }
   }
 
-  // ✅ ifEnabled / ifDisabled
+  //  ifEnabled / ifDisabled
   // Example: await base.ifEnabled(el.saveBtn, async () => { await base.click(el.saveBtn); });
   async ifEnabled(selector: string | Locator, thenDo: () => Promise<void>, elseDo?: () => Promise<void>): Promise<void> {
     const name = this.getElementName(selector);
@@ -901,7 +901,7 @@ export class BasePage {
     if (disabled) { await thenDo(); } else if (elseDo) { await elseDo(); }
   }
 
-  // ✅ ifChecked / ifUnchecked
+  //  ifChecked / ifUnchecked
   // Example: await base.ifChecked(el.termsBox, async () => { log.info("Already checked"); });
   async ifChecked(selector: string | Locator, thenDo: () => Promise<void>, elseDo?: () => Promise<void>): Promise<void> {
     const name = this.getElementName(selector);
@@ -917,7 +917,7 @@ export class BasePage {
     if (!checked) { await thenDo(); } else if (elseDo) { await elseDo(); }
   }
 
-  // ✅ ifText — compare element text with operator
+  //  ifText — compare element text with operator
   // Example: await base.ifText(el.status, "==", "Approved", async () => {
   //              log.pass("Status is Approved");
   //          });
@@ -929,7 +929,7 @@ export class BasePage {
     if (result) { await thenDo(); } else if (elseDo) { await elseDo(); }
   }
 
-  // ✅ ifInputValue — compare input value with operator
+  //  ifInputValue — compare input value with operator
   // Example: await base.ifInputValue(el.qty, ">", 0, async () => { ... });
   async ifInputValue(selector: string | Locator, op: CompareOp, expected: string | number, thenDo: () => Promise<void>, elseDo?: () => Promise<void>): Promise<void> {
     const name = this.getElementName(selector);
@@ -939,7 +939,7 @@ export class BasePage {
     if (result) { await thenDo(); } else if (elseDo) { await elseDo(); }
   }
 
-  // ✅ ifPageContainsText / ifPageNotContainsText
+  //  ifPageContainsText / ifPageNotContainsText
   // Example: await base.ifPageContainsText("Error", async () => {
   //              await base.takeScreenshot("error_found");
   //          });
@@ -955,7 +955,7 @@ export class BasePage {
     if (!found) { await thenDo(); } else if (elseDo) { await elseDo(); }
   }
 
-  // ✅ ifCount — compare element count with operator
+  //  ifCount — compare element count with operator
   // Example: await base.ifCount(el.errors, ">", 0, async () => {
   //              log.warn("Validation errors found");
   //          });
@@ -967,7 +967,7 @@ export class BasePage {
     if (result) { await thenDo(); } else if (elseDo) { await elseDo(); }
   }
 
-  // ✅ ifEmpty — check if input is empty
+  //  ifEmpty — check if input is empty
   // Example: await base.ifEmpty(el.searchBox, async () => {
   //              await base.type(el.searchBox, "default");
   //          });
@@ -979,7 +979,7 @@ export class BasePage {
     if (empty) { await thenDo(); } else if (elseDo) { await elseDo(); }
   }
 
-  // ✅ ifURL
+  //  ifURL
   // Example: await base.ifURL("contains", "/dashboard", async () => {
   //              log.pass("On dashboard");
   //          });
@@ -994,7 +994,7 @@ export class BasePage {
   //  WHILE LOOPS — NO autoHeal (checking state repeatedly)
   // ==========================================================================
 
-  // ✅ whileVisible — repeat action while element is visible
+  //  whileVisible — repeat action while element is visible
   // Example: await base.whileVisible(el.approveButton, async () => {
   //              await base.click(el.approveButton);
   //              await base.waitForLoadState("domcontentloaded");
@@ -1011,7 +1011,7 @@ export class BasePage {
     }
   }
 
-  // ✅ whileNotVisible — repeat action while element is NOT visible
+  //  whileNotVisible — repeat action while element is NOT visible
   // Example: await base.whileNotVisible(el.successBanner, async () => {
   //              await base.pause(1000);
   //          }, 10);
@@ -1027,7 +1027,7 @@ export class BasePage {
     }
   }
 
-  // ✅ whileEnabled / whileDisabled
+  //  whileEnabled / whileDisabled
   // Example: await base.whileEnabled(el.nextButton, async () => {
   //              await base.click(el.nextButton);
   //          }, 20);
@@ -1055,19 +1055,19 @@ export class BasePage {
     }
   }
 
-  // ✅ closeUntilVisible — click close button until target element appears
+  //  closeUntilVisible — click close button until target element appears
   // Stops when: target visible OR close button gone OR maxAttempts reached
   // Example: await base.closeUntilVisible(el.closeButton, el.approvedStatus, 5);
   async closeUntilVisible(closeSelector: string | Locator, targetSelector: string | Locator, maxAttempts = 5): Promise<void> {
     const name = this.getElementName(targetSelector);
     let attempts = 0;
     while (attempts < maxAttempts) {
-      // ✅ Target visible → done
+      //  Target visible → done
       const targetVisible = await this.getLocator(targetSelector)
         .waitFor({ state: "visible", timeout: 2000 }).then(() => true).catch(() => false);
       if (targetVisible) { log.debug(`closeUntilVisible → ${name} visible — done`); return; }
 
-      // ✅ Close button gone → stop (all panels closed)
+      //  Close button gone → stop (all panels closed)
       const closeVisible = await this.getLocator(closeSelector)
         .waitFor({ state: "visible", timeout: 2000 }).then(() => true).catch(() => false);
       if (!closeVisible) { log.debug(`closeUntilVisible → Close gone — stopping`); return; }
@@ -1083,7 +1083,7 @@ export class BasePage {
   //  RETRY ACTION
   // ==========================================================================
 
-  // ✅ retryAction — retry any async action up to N times
+  //  retryAction — retry any async action up to N times
   // Example: await base.retryAction(async () => {
   //              await base.click(el.unstableButton);
   //          }, 3, 1000, "click unstable button");
@@ -1105,7 +1105,7 @@ export class BasePage {
   //  STEP LOGGER
   // ==========================================================================
 
-  // ✅ step — group actions under a named step with timing
+  //  step — group actions under a named step with timing
   // Example: await base.step("Fill login form", async () => {
   //              await base.fill(el.email, "user@test.com");
   //              await base.fill(el.password, "pass123");
@@ -1117,14 +1117,14 @@ export class BasePage {
     const start = Date.now();
     log.step(`▶ Step ${this._stepCounter} | ${description}`);
     await action();
-    log.pass(`✅ Step ${this._stepCounter} done | +${Date.now() - start}ms`);
+    log.pass(` Step ${this._stepCounter} done | +${Date.now() - start}ms`);
   }
 
   // ==========================================================================
   //  TOAST HELPERS
   // ==========================================================================
 
-  // ✅ waitForSuccessToast / waitForErrorToast — returns toast message text
+  //  waitForSuccessToast / waitForErrorToast — returns toast message text
   // Example: const msg = await base.waitForSuccessToast();
   //          expect(msg).toContain("saved");
   async waitForSuccessToast(timeout = 10000): Promise<string> {
@@ -1157,7 +1157,7 @@ export class BasePage {
   //  TABLE HELPERS
   // ==========================================================================
 
-  // ✅ getTableRowCount — count table rows
+  //  getTableRowCount — count table rows
   // Example: const count = await base.getTableRowCount(el.ordersTable);
   async getTableRowCount(tableSelector: string | Locator): Promise<number> {
     const count = await this.getLocator(tableSelector).locator("tr").count();
@@ -1165,7 +1165,7 @@ export class BasePage {
     return count;
   }
 
-  // ✅ getTableCellText — get text from specific cell [row][col]
+  //  getTableCellText — get text from specific cell [row][col]
   // Example: const cell = await base.getTableCellText(el.table, 0, 2);
   async getTableCellText(tableSelector: string | Locator, rowIndex: number, colIndex: number): Promise<string> {
     const text = (await this.getLocator(tableSelector)
@@ -1174,7 +1174,7 @@ export class BasePage {
     return text;
   }
 
-  // ✅ clickTableRowByText — find row containing text and click it
+  //  clickTableRowByText — find row containing text and click it
   // Example: await base.clickTableRowByText(el.table, "PO-001");
   async clickTableRowByText(tableSelector: string | Locator, searchText: string): Promise<void> {
     const rows = this.getLocator(tableSelector).locator("tr");
@@ -1194,7 +1194,7 @@ export class BasePage {
   //  NETWORK
   // ==========================================================================
 
-  // ✅ waitForAPIResponse — intercept API call and get response
+  //  waitForAPIResponse — intercept API call and get response
   // Example: const { status, body } = await base.waitForAPIResponse(
   //              "/api/orders",
   //              async () => { await base.click(el.saveButton); }
@@ -1214,7 +1214,7 @@ export class BasePage {
     return { status, body };
   }
 
-  // ✅ mockAPIResponse — intercept and mock an API endpoint
+  //  mockAPIResponse — intercept and mock an API endpoint
   // Example: await base.mockAPIResponse("/api/products", { items: [] }, 200);
   async mockAPIResponse(urlPattern: string, responseBody: object, status = 200): Promise<this> {
     await this.page.route(urlPattern, async route => {
@@ -1224,7 +1224,7 @@ export class BasePage {
     return this;
   }
 
-  // ✅ blockRequest — block a network request
+  //  blockRequest — block a network request
   // Example: await base.blockRequest("/api/ads");
   async blockRequest(urlPattern: string): Promise<this> {
     await this.page.route(urlPattern, route => route.abort());
@@ -1236,7 +1236,7 @@ export class BasePage {
   //  DIALOG
   // ==========================================================================
 
-  // ✅ acceptDialog / dismissDialog — handle browser alert/confirm/prompt
+  //  acceptDialog / dismissDialog — handle browser alert/confirm/prompt
   // Example: base.acceptDialog();  // call BEFORE the action that triggers dialog
   //          await base.click(el.deleteButton);
   acceptDialog(promptText?: string): this {
@@ -1253,7 +1253,7 @@ export class BasePage {
   //  IFRAME
   // ==========================================================================
 
-  // ✅ switchToFrame / switchToMainFrame
+  //  switchToFrame / switchToMainFrame
   // Example: const frame = await base.switchToFrame(el.iframeElement);
   //          await base.switchToMainFrame();
   async switchToFrame(selector: string | Locator): Promise<FrameLocator> {
@@ -1279,7 +1279,7 @@ export class BasePage {
   //  FILE UPLOAD
   // ==========================================================================
 
-  // ✅ uploadFile — set file on input[type=file]
+  //  uploadFile — set file on input[type=file]
   // Example: await base.uploadFile(el.fileInput, "src/testData/invoice.pdf");
   //          await base.uploadFile(el.fileInput, ["file1.pdf", "file2.pdf"]);
   async uploadFile(selector: string | Locator, filePaths: string | string[]): Promise<this> {
@@ -1293,7 +1293,7 @@ export class BasePage {
     }, { context: `BasePage.uploadFile` });
   }
 
-  // ✅ clearFileUpload — clear file input
+  //  clearFileUpload — clear file input
   // Example: await base.clearFileUpload(el.fileInput);
   async clearFileUpload(selector: string | Locator): Promise<this> {
     const name = this.getElementName(selector);
@@ -1340,7 +1340,7 @@ export class BasePage {
   //  JAVASCRIPT
   // ==========================================================================
 
-  // ✅ executeScript — run JS in browser context
+  //  executeScript — run JS in browser context
   // Example: await base.executeScript("document.body.style.zoom = '0.5'");
   //          const title = await base.executeScript<string>("return document.title");
   async executeScript<T = void>(script: string): Promise<T> {
@@ -1355,7 +1355,7 @@ export class BasePage {
   //  SCROLL
   // ==========================================================================
 
-  // ✅ scrollToElement — scroll element into view, NO autoHeal
+  //  scrollToElement — scroll element into view, NO autoHeal
   // Example: await base.scrollToElement(el.footer);
   //          await base.scrollIntoView(el.footer); // alias
   async scrollToElement(selector: string | Locator): Promise<this> {
@@ -1368,7 +1368,7 @@ export class BasePage {
     }, { context: `BasePage.scrollToElement` });
   }
 
-  // ✅ scrollToTop / scrollToBottom / scrollBy
+  //  scrollToTop / scrollToBottom / scrollBy
   // Example: await base.scrollToTop();
   //          await base.scrollToBottom();
   //          await base.scrollBy(0, 500); // scroll down 500px
@@ -1391,7 +1391,7 @@ export class BasePage {
   //  SCREENSHOT
   // ==========================================================================
 
-  // ✅ takeScreenshot — full page screenshot
+  //  takeScreenshot — full page screenshot
   // Example: await base.takeScreenshot("order_created");
   async takeScreenshot(name = "screenshot"): Promise<void> {
     const fileName = `${name}_${Date.now()}.png`;
@@ -1399,7 +1399,7 @@ export class BasePage {
     log.pass(`Screenshot → ${fileName}`);
   }
 
-  // ✅ takeElementScreenshot — screenshot of specific element
+  //  takeElementScreenshot — screenshot of specific element
   // Example: await base.takeElementScreenshot(el.chart, "revenue_chart");
   async takeElementScreenshot(selector: string | Locator, name = "element"): Promise<void> {
     const fileName = `${name}_${Date.now()}.png`;
@@ -1411,7 +1411,7 @@ export class BasePage {
   //  DATEPICKER
   // ==========================================================================
 
-  // ✅ fillDatePicker — handles both calendar popup and text input date fields
+  //  fillDatePicker — handles both calendar popup and text input date fields
   // Example: await base.fillDatePicker(el.supplierInvoiceDate, "15/06/2026");
   //          await base.fillDatePicker(el.documentDate, "15/06/2026");
   async fillDatePicker(selector: string | Locator, date: string): Promise<this> {
@@ -1456,7 +1456,7 @@ export class BasePage {
   async getTitle(): Promise<string> { return this.page.title(); }
   getPage(): Page { return this.page; }
 
-  // ✅ pause — wait N milliseconds (use sparingly)
+  //  pause — wait N milliseconds (use sparingly)
   // Example: await base.pause(300);
   async pause(milliseconds = 1000): Promise<this> {
     log.warn(`pause → ${milliseconds}ms`);
@@ -1464,7 +1464,7 @@ export class BasePage {
     return this;
   }
 
-  // ✅ highlight — visually highlight element (DEBUG=true only)
+  //  highlight — visually highlight element (DEBUG=true only)
   // Example: await base.highlight(el.submitButton, "red");
   async highlight(selector: string | Locator, color = "red"): Promise<void> {
     if (process.env.DEBUG !== "true") return;

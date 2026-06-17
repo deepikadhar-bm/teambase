@@ -33,7 +33,7 @@
 
   "include": [
     "src/**/*.ts"
-  ],
+, "src/app-constant"  ],
 
   "exclude": [
     "node_modules",

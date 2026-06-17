@@ -7,12 +7,12 @@
 //
 //  RULE: if multiple elements match the same strategy → take .first()
 // ============================================================================
- 
+
 import { Locator, Page } from "@playwright/test";
-import { logger }        from "../../src/utils/logger";
- 
+import { logger }        from "../helpers/logger";
+
 type PlaywrightRole = Parameters<Page["getByRole"]>[0];
- 
+
 export type HealStrategy =
   | "primary"
   | "getByRole"
@@ -24,7 +24,7 @@ export type HealStrategy =
   | "dom"
   | "relative-xpath"
   | "position";
- 
+
 export interface HealResult {
   locator:    Locator;
   healed:     boolean;
@@ -32,7 +32,7 @@ export interface HealResult {
   selector?:  string;
   confidence: number;
 }
- 
+
 export interface HealContext {
   testName:  string;
   testFile:  string;
@@ -41,7 +41,7 @@ export interface HealContext {
   pomFile?:  string;
   pomLine?:  number;
 }
- 
+
 interface RuntimeHints {
   raw:              string;
   selector?:        string;
@@ -56,14 +56,14 @@ interface RuntimeHints {
   xpathSelectors:   string[];
   lastKnownBounds?: { x: number; y: number; width: number; height: number };
 }
- 
+
 interface HealingAttempt {
   strategy:   Exclude<HealStrategy, "primary">;
   locator:    Locator;
   selector:   string;
   confidence: number;
 }
- 
+
 // ── Confidence per strategy ───────────────────────────────────────────────────
 const STRATEGY_CONFIDENCE: Record<Exclude<HealStrategy, "primary">, number> = {
   getByRole:        0.90,
@@ -76,7 +76,7 @@ const STRATEGY_CONFIDENCE: Record<Exclude<HealStrategy, "primary">, number> = {
   "relative-xpath": 0.35,  // kept in type only — disabled in execution
   position:         0.25,
 };
- 
+
 // ✅ Increased timeouts — ERP apps are slow, 800ms not enough
 const STRATEGY_TIMEOUT: Record<Exclude<HealStrategy, "primary">, number> = {
   getByRole:        2000,
@@ -89,14 +89,14 @@ const STRATEGY_TIMEOUT: Record<Exclude<HealStrategy, "primary">, number> = {
   "relative-xpath": 2500,  // kept for type — disabled in execution
   position:         2500,
 };
- 
+
 const ROLE_BY_TAG: Record<string, PlaywrightRole> = {
   a:        "link",
   button:   "button",
   select:   "combobox",
   textarea: "textbox",
 };
- 
+
 const INPUT_ROLE_BY_TYPE: Record<string, PlaywrightRole> = {
   button:   "button",
   checkbox: "checkbox",
@@ -110,11 +110,11 @@ const INPUT_ROLE_BY_TYPE: Record<string, PlaywrightRole> = {
   text:     "textbox",
   url:      "textbox",
 };
- 
+
 const SCORED_ATTRS    = ["id", "name", "placeholder", "aria-label", "title", "class", "type"];
 const MAX_HINT_LENGTH = 120;  // ✅ Increased from 80 — more context kept
 const DOM_MIN_SCORE   = 0.45;
- 
+
 // ============================================================================
 //  VISIBILITY
 // ============================================================================
@@ -126,7 +126,7 @@ async function isVisible(locator: Locator, timeout = 2000): Promise<boolean> {
     return false;
   }
 }
- 
+
 // ============================================================================
 //  STRING HELPERS
 // ============================================================================
@@ -136,7 +136,7 @@ function cleanHint(value?: string): string | undefined {
   if (!cleaned || cleaned.length > MAX_HINT_LENGTH) return undefined;
   return cleaned;
 }
- 
+
 function unique(values: Array<string | undefined>): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -148,7 +148,7 @@ function unique(values: Array<string | undefined>): string[] {
   }
   return out;
 }
- 
+
 function firstMatch(source: string, patterns: RegExp[]): string | undefined {
   for (const p of patterns) {
     const m = source.match(p);
@@ -157,7 +157,7 @@ function firstMatch(source: string, patterns: RegExp[]): string | undefined {
   }
   return undefined;
 }
- 
+
 function allTextValues(source: string): string[] {
   const values: string[] = [];
   const patterns = [
@@ -176,11 +176,11 @@ function allTextValues(source: string): string[] {
   }
   return unique(values);
 }
- 
+
 function decodeLocatorString(value: string): string {
   return value.replace(/\\'/g, "'").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
 }
- 
+
 function allMatches(source: string, patterns: RegExp[]): string[] {
   const values: string[] = [];
   for (const p of patterns) {
@@ -191,7 +191,7 @@ function allMatches(source: string, patterns: RegExp[]): string[] {
   }
   return unique(values);
 }
- 
+
 function allAttributeValues(source: string, attributeNames: string[]): string[] {
   const values: string[] = [];
   for (const attrName of attributeNames) {
@@ -201,12 +201,12 @@ function allAttributeValues(source: string, attributeNames: string[]): string[] 
   }
   return unique(values);
 }
- 
+
 function extractSelector(raw: string): string | undefined {
   const m = raw.match(/locator\((['"`])((?:\\.|(?!\1).)+)\1\)/);
   return m?.[2] ? decodeLocatorString(m[2]) : undefined;
 }
- 
+
 function extractAttributes(source: string): Record<string, string> {
   const attrs: Record<string, string> = {};
   const normalized = decodeLocatorString(source);
@@ -223,7 +223,7 @@ function extractAttributes(source: string): Record<string, string> {
   }
   return attrs;
 }
- 
+
 function extractTag(selector: string | undefined): string | undefined {
   if (!selector) return undefined;
   const normalized = selector.replace(/^xpath=/, "").replace(/^css=/, "").trim();
@@ -232,7 +232,7 @@ function extractTag(selector: string | undefined): string | undefined {
   const tag        = xpathTag || cssTag;
   return tag && tag !== "*" ? tag.toLowerCase() : undefined;
 }
- 
+
 function inferRole(selector: string | undefined, raw: string): PlaywrightRole | undefined {
   const explicit = firstMatch(raw, [
     /getByRole\(['"`]([^'"`]+)['"`]/,
@@ -252,44 +252,44 @@ function inferRole(selector: string | undefined, raw: string): PlaywrightRole | 
   }
   return undefined;
 }
- 
+
 function cssEscape(value: string):   string { return value.replace(/([ !"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, "\\$1"); }
 function cssString(value: string):   string { return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"'); }
 function xpathString(value: string): string { return value.replace(/"/g, '\\"'); }
- 
+
 function inferCssSelectors(selector: string | undefined, raw: string): string[] {
   const exactSelector = selector?.startsWith("css=")
     ? selector.replace(/^css=/, "")
     : selector && !selector.startsWith("xpath=") && !selector.startsWith("//") && !selector.startsWith("(")
       ? selector : undefined;
- 
+
   const ids = allMatches(raw, [
     /#([A-Za-z][\w-]*)/g,
     /\[@id=\\?["']([^"'\\]+)\\?["']\]/g,
     /@id=\\?["']([^"'\\]+)\\?["']/g,
   ]).map(id => `#${cssEscape(id)}`);
- 
+
   const dataAttributes = allAttributeValues(raw, ["data-testid", "data-cy", "data-qa"])
     .map(v => `[data-testid="${cssString(v)}"], [data-cy="${cssString(v)}"], [data-qa="${cssString(v)}"]`);
- 
+
   const names = allMatches(raw, [
     /\[name=\\?["']([^"'\\]+)\\?["']\]/g,
     /@name=\\?["']([^"'\\]+)\\?["']/g,
   ]).map(v => `[name="${cssString(v)}"]`);
- 
+
   const ariaLabels = allMatches(raw, [
     /\[aria-label=\\?["']([^"'\\]+)\\?["']\]/g,
     /@aria-label=\\?["']([^"'\\]+)\\?["']/g,
   ]).map(v => `[aria-label="${cssString(v)}"]`);
- 
+
   const placeholders = allMatches(raw, [
     /\[placeholder=\\?["']([^"'\\]+)\\?["']\]/g,
     /@placeholder=\\?["']([^"'\\]+)\\?["']/g,
   ]).map(v => `[placeholder="${cssString(v)}"]`);
- 
+
   return unique([exactSelector, ...ids, ...dataAttributes, ...names, ...ariaLabels, ...placeholders]);
 }
- 
+
 function inferXPathSelectors(
   selector:   string | undefined,
   hints:      Partial<RuntimeHints> & { texts?: string[] },
@@ -299,17 +299,17 @@ function inferXPathSelectors(
     ? selector
     : selector?.startsWith("//") || selector?.startsWith("(")
       ? `xpath=${selector}` : undefined;
- 
+
   const selectors: Array<string | undefined> = [exactXPath];
- 
+
   for (const t of hints.texts ?? []) {
     selectors.push(`xpath=//*[normalize-space()="${xpathString(t)}"]`);
     selectors.push(`xpath=//*[contains(normalize-space(),"${xpathString(t)}")]`);
   }
- 
+
   if (hints.placeholder) selectors.push(`xpath=//*[@placeholder="${xpathString(hints.placeholder)}"]`);
   if (hints.label)       selectors.push(`xpath=//*[@aria-label="${xpathString(hints.label)}"]`);
- 
+
   for (const [attr, val] of Object.entries(attributes)) {
     if (!val || val.length < 3 || !/^[a-zA-Z][\w-]*$/.test(val)) continue;
     const escaped = xpathString(val);
@@ -319,10 +319,10 @@ function inferXPathSelectors(
     if (attr === "aria-label")  selectors.push(`xpath=//*[contains(@aria-label,"${escaped}")]`);
     if (attr === "placeholder") selectors.push(`xpath=//*[contains(@placeholder,"${escaped}")]`);
   }
- 
+
   return unique(selectors);
 }
- 
+
 // ============================================================================
 //  BUILD HINTS
 // ============================================================================
@@ -333,7 +333,7 @@ function buildHints(
   const raw        = locator.toString();
   const selector   = extractSelector(raw);
   const attributes = extractAttributes(selector || raw);
- 
+
   const label = firstMatch(raw, [
     /getByLabel\(['"`]([^'"`]+)['"`]/,
     /aria-label=["']([^"']+)["']/,
@@ -341,27 +341,27 @@ function buildHints(
     /\[name=["']([^"']+)["']\]/,
     /@name=["']([^"']+)["']/,
   ]);
- 
+
   const placeholder = firstMatch(raw, [
     /getByPlaceholder\(['"`]([^'"`]+)['"`]/,
     /placeholder=["']([^"']+)["']/,
     /@placeholder=["']([^"']+)["']/,
   ]);
- 
+
   const texts = allTextValues(selector || raw);
   const name  = firstMatch(raw, [
     /getByRole\(['"`][^'"`]+['"`],\s*\{\s*name:\s*['"`]([^'"`]+)['"`]/,
     /title=["']([^"']+)["']/,
     /@title=["']([^"']+)["']/,
   ]) || texts[0] || label || placeholder;
- 
+
   const tag  = extractTag(selector);
   const role = inferRole(selector, raw);
- 
+
   const partialHints: Partial<RuntimeHints> & { texts: string[] } = {
     label, name, placeholder, role, texts, tag,
   };
- 
+
   return {
     raw, selector, tag, attributes, role, name, label, placeholder, texts,
     cssSelectors:   inferCssSelectors(selector, raw),
@@ -369,7 +369,7 @@ function buildHints(
     lastKnownBounds,
   };
 }
- 
+
 // ============================================================================
 //  LEVENSHTEIN + SIMILARITY
 // ============================================================================
@@ -386,13 +386,13 @@ function levenshtein(a: string, b: string): number {
   }
   return prev[b.length];
 }
- 
+
 function longestCommonPrefix(a: string, b: string): number {
   let i = 0;
   while (i < a.length && i < b.length && a[i] === b[i]) i++;
   return i;
 }
- 
+
 function similarity(a: string, b: string): number {
   const left  = a.toLowerCase();
   const right = b.toLowerCase();
@@ -406,7 +406,7 @@ function similarity(a: string, b: string): number {
   const prefixScore = longestCommonPrefix(left, right) / Math.min(left.length, right.length);
   return Math.max(editScore, prefixScore);
 }
- 
+
 // ============================================================================
 //  DOM RECOVERY
 // ============================================================================
@@ -416,10 +416,10 @@ async function buildDomRecoveryAttempts(
 ): Promise<HealingAttempt[]> {
   const scoredAttrs  = Object.entries(hints.attributes).filter(([n]) => SCORED_ATTRS.includes(n));
   const hasTextHints = hints.texts.length > 0;
- 
+
   if (!hints.tag) return [];
   if (scoredAttrs.length === 0 && !hasTextHints) return [];
- 
+
   try {
     if (page.isClosed()) return [];
     await page.evaluate(() => document.readyState);
@@ -427,7 +427,7 @@ async function buildDomRecoveryAttempts(
     logger.debug("[AutoHeal] Page not ready for DOM scan — skipping");
     return [];
   }
- 
+
   const candidates = await page.locator(hints.tag).evaluateAll(
     (elements, attrNames: string[]) => {
       function isVis(el: Element): boolean {
@@ -454,7 +454,7 @@ async function buildDomRecoveryAttempts(
     },
     scoredAttrs.map(([name]) => name)
   );
- 
+
   const ranked = candidates
     .map(candidate => {
       let score = scoredAttrs.reduce((best, [attrName, expected]) => {
@@ -470,13 +470,13 @@ async function buildDomRecoveryAttempts(
     })
     .filter(c => c.score >= DOM_MIN_SCORE)
     .sort((a, b) => b.score - a.score);
- 
+
   logger.debug(`[AutoHeal] DOM scan: ${ranked.length} candidates for <${hints.tag}>`);
- 
+
   return ranked.slice(0, 3).map(candidate => {
     let preciseLocator: Locator;
     let preciseSelector: string;
- 
+
     if (candidate.id) {
       preciseSelector = `#${candidate.id}`;
       preciseLocator  = page.locator(preciseSelector);
@@ -502,7 +502,7 @@ async function buildDomRecoveryAttempts(
         : hints.tag!;
       preciseLocator  = page.locator(preciseSelector);
     }
- 
+
     return {
       strategy:   "dom" as const,
       locator:    preciseLocator,
@@ -511,7 +511,7 @@ async function buildDomRecoveryAttempts(
     };
   });
 }
- 
+
 // ============================================================================
 //  POSITION STRATEGY
 // ============================================================================
@@ -520,16 +520,16 @@ async function buildPositionAttempts(
   hints: RuntimeHints
 ): Promise<HealingAttempt[]> {
   if (!hints.lastKnownBounds || !hints.tag) return [];
- 
+
   const bounds = hints.lastKnownBounds;
- 
+
   try {
     if (page.isClosed()) return [];
     await page.evaluate(() => document.readyState);
   } catch {
     return [];
   }
- 
+
   const closest = await page.locator(hints.tag).evaluateAll(
     (elements, target: { x: number; y: number; width: number; height: number }) => {
       function isVis(el: Element): boolean {
@@ -576,9 +576,9 @@ async function buildPositionAttempts(
     },
     bounds
   );
- 
+
   if (closest.length === 0) return [];
- 
+
   return closest.map(c => {
     let selector: string;
     if      (c.id)        selector = `#${c.id}`;
@@ -587,7 +587,7 @@ async function buildPositionAttempts(
     else if (c.ariaLabel) selector = `[aria-label="${c.ariaLabel}"]`;
     else if (c.text)      selector = `xpath=//${hints.tag}[normalize-space()="${xpathString(c.text)}"]`;
     else                  selector = hints.tag!;
- 
+
     return {
       strategy:   "position" as const,
       locator:    page.locator(selector),
@@ -596,7 +596,7 @@ async function buildPositionAttempts(
     };
   });
 }
- 
+
 // ============================================================================
 //  RELATIVE XPATH RECOVERY
 // ============================================================================
@@ -605,16 +605,16 @@ async function buildRelativeXPathAttempts(
   hints: RuntimeHints
 ): Promise<HealingAttempt[]> {
   if (!hints.tag && hints.texts.length === 0) return [];
- 
+
   try {
     if (page.isClosed()) return [];
     await page.evaluate(() => document.readyState);
   } catch {
     return [];
   }
- 
+
   const targetTag = hints.tag || "*";
- 
+
   const anchors = await page.evaluate((tt: string) => {
     const stableElements = Array.from(
       document.querySelectorAll("label,h1,h2,h3,h4,h5,legend,th,button,a,span,p,div")
@@ -623,7 +623,7 @@ async function buildRelativeXPathAttempts(
       const rect = el.getBoundingClientRect();
       return text && text.length > 1 && text.length < 60 && rect.width > 0 && rect.height > 0;
     });
- 
+
     function getXPath(el: Element): string {
       const id = el.getAttribute("id");
       if (id) return `//*[@id="${id}"]`;
@@ -638,19 +638,19 @@ async function buildRelativeXPathAttempts(
       }
       return "/" + parts.join("/");
     }
- 
+
     const results: Array<{ tag: string; text: string; id?: string; xpath: string; relation: string }> = [];
- 
+
     for (const anchor of stableElements.slice(0, 100)) {
       const anchorText = (anchor as HTMLElement).innerText?.trim();
       if (!anchorText) continue;
       const anchorXPath = getXPath(anchor);
- 
+
       const followSib = anchor.nextElementSibling;
       if (followSib && followSib.tagName.toLowerCase() === tt) {
         results.push({ tag: anchor.tagName.toLowerCase(), text: anchorText, id: anchor.getAttribute("id") || undefined, xpath: anchorXPath, relation: "sibling" });
       }
- 
+
       const parent = anchor.closest("form,fieldset,section,div,nav,table,ul,ol");
       if (parent) {
         const childTargets = parent.querySelectorAll(tt);
@@ -658,7 +658,7 @@ async function buildRelativeXPathAttempts(
           results.push({ tag: parent.tagName.toLowerCase(), text: parent.getAttribute("id") || parent.getAttribute("class")?.split(" ")[0] || "", id: parent.getAttribute("id") || undefined, xpath: getXPath(parent), relation: "ancestor" });
         }
       }
- 
+
       const allTargets = anchor.closest("body")?.querySelectorAll(tt);
       if (allTargets) {
         for (const target of Array.from(allTargets).slice(0, 3)) {
@@ -671,22 +671,22 @@ async function buildRelativeXPathAttempts(
         }
       }
     }
- 
+
     return results.slice(0, 20);
   }, targetTag);
- 
+
   if (anchors.length === 0) return [];
- 
+
   const attempts: HealingAttempt[] = [];
   const seen = new Set<string>();
- 
+
   for (const anchor of anchors) {
     const anchorBase = anchor.id
       ? `//*[@id="${anchor.id}"]`
       : `//${anchor.tag}[normalize-space()="${xpathString(anchor.text)}"]`;
- 
+
     const expressions: Array<{ xpath: string; label: string }> = [];
- 
+
     switch (anchor.relation) {
       case "sibling":
         expressions.push(
@@ -716,14 +716,14 @@ async function buildRelativeXPathAttempts(
         );
         break;
     }
- 
+
     for (const text of hints.texts) {
       expressions.push(
         { xpath: `xpath=//*[normalize-space()="${xpathString(text)}"]/parent::${targetTag}`,      label: `parent of "${text}"` },
         { xpath: `xpath=//*[normalize-space()="${xpathString(text)}"]/ancestor::${targetTag}[1]`, label: `ancestor of "${text}"` }
       );
     }
- 
+
     for (const expr of expressions) {
       if (seen.has(expr.xpath)) continue;
       seen.add(expr.xpath);
@@ -735,16 +735,16 @@ async function buildRelativeXPathAttempts(
       });
     }
   }
- 
+
   return attempts;
 }
- 
+
 // ============================================================================
 //  STANDARD HEALING ATTEMPTS
 // ============================================================================
 function buildHealingAttempts(page: Page, hints: RuntimeHints): HealingAttempt[] {
   const attempts: HealingAttempt[] = [];
- 
+
   if (hints.role && hints.name) {
     attempts.push({
       strategy:   "getByRole",
@@ -753,7 +753,7 @@ function buildHealingAttempts(page: Page, hints: RuntimeHints): HealingAttempt[]
       confidence: STRATEGY_CONFIDENCE["getByRole"],
     });
   }
- 
+
   if (hints.label) {
     attempts.push({
       strategy:   "getByLabel",
@@ -762,7 +762,7 @@ function buildHealingAttempts(page: Page, hints: RuntimeHints): HealingAttempt[]
       confidence: STRATEGY_CONFIDENCE["getByLabel"],
     });
   }
- 
+
   if (hints.placeholder) {
     attempts.push({
       strategy:   "getByPlaceholder",
@@ -771,7 +771,7 @@ function buildHealingAttempts(page: Page, hints: RuntimeHints): HealingAttempt[]
       confidence: STRATEGY_CONFIDENCE["getByPlaceholder"],
     });
   }
- 
+
   for (const text of hints.texts) {
     attempts.push({
       strategy:   "getByText",
@@ -780,18 +780,18 @@ function buildHealingAttempts(page: Page, hints: RuntimeHints): HealingAttempt[]
       confidence: STRATEGY_CONFIDENCE["getByText"],
     });
   }
- 
+
   for (const selector of hints.cssSelectors) {
     attempts.push({ strategy: "css",   locator: page.locator(selector), selector, confidence: STRATEGY_CONFIDENCE["css"] });
   }
- 
+
   for (const selector of hints.xpathSelectors) {
     attempts.push({ strategy: "xpath", locator: page.locator(selector), selector, confidence: STRATEGY_CONFIDENCE["xpath"] });
   }
- 
+
   return attempts;
 }
- 
+
 // ============================================================================
 //  ✅ IMPROVED LOG HELPER — clean, structured, easy to read
 // ============================================================================
@@ -802,12 +802,12 @@ function formatHealHeader(hints: RuntimeHints): string {
     `[AutoHeal] Healing → ${original} | tag: ${tag}`
   );
 }
- 
+
 function formatHealMiss(strategy: string, selector: string): string {
   const clean = selector.replace(/\s+/g, " ").substring(0, 80);
   return `  [AutoHeal] ✗ ${strategy.padEnd(18)} ${clean}`;
 }
- 
+
 function formatHealHit(
   strategy: string,
   selector: string,
@@ -819,12 +819,12 @@ function formatHealHit(
     `[AutoHeal] 💡 UPDATE POM → ${clean}`
   );
 }
- 
+
 function formatHealFail(hints: RuntimeHints, elapsed: number): string {
   const original = hints.selector ?? hints.raw.substring(0, 100);
   return `[AutoHeal] ❌ FAILED all strategies → ${original} (+${elapsed}ms)`;
 }
- 
+
 // ============================================================================
 //  MAIN
 // ============================================================================
@@ -833,54 +833,54 @@ export async function autoHeal(
   context?:         HealContext,
   timeoutOverride?: number
 ): Promise<HealResult> {
- 
+
   const startTime = Date.now();
- 
+
   // ── Primary check ─────────────────────────────────────────────────────────
   if (await isVisible(locator, timeoutOverride ?? 5000)) {
     return { locator: locator.first(), healed: false, strategy: "primary", confidence: 1.0 };
   }
- 
+
   const page = locator.page();
   try {
     if (page.isClosed()) return { locator, healed: false, strategy: "primary", confidence: 0 };
   } catch {
     return { locator, healed: false, strategy: "primary", confidence: 0 };
   }
- 
+
   const lastKnownBounds = (locator as any)._lastKnownBounds;
   const hints           = buildHints(locator, lastKnownBounds);
- 
+
   const standard = buildHealingAttempts(page, hints);
   const domBased = await buildDomRecoveryAttempts(page, hints);
   // ✅ Removed relative-xpath and position — they heal to wrong elements
   // Relative-xpath uses anchor text proximity which is unreliable in ERP apps
   // Position uses pixel coordinates which shift on every page load
- 
+
   const attempts = [...standard, ...domBased];
- 
+
   // ✅ Clean structured header log
   logger.warn(formatHealHeader(hints));
- 
+
   // ── Try each strategy ─────────────────────────────────────────────────────
   for (const attempt of attempts) {
     const attemptStart = Date.now();
     const timeout      = STRATEGY_TIMEOUT[attempt.strategy] ?? 2000;
     const visible      = await isVisible(attempt.locator, timeout);
     const elapsed      = Date.now() - attemptStart;
- 
+
     if (!visible) {
       // ✅ Clean miss log — one line per attempt, easy to scan
       logger.debug(formatHealMiss(attempt.strategy, attempt.selector));
       continue;
     }
- 
+
     const resolved     = attempt.locator.first();
     const totalElapsed = Date.now() - startTime;
- 
+
     // ✅ Clean success log — boxed, stands out clearly
     logger.pass(formatHealHit(attempt.strategy, attempt.selector, totalElapsed));
- 
+
     return {
       locator:    resolved,
       healed:     true,
@@ -889,10 +889,10 @@ export async function autoHeal(
       confidence: attempt.confidence,
     };
   }
- 
+
   // ✅ Clean fail log — all context in one block
   const totalElapsed = Date.now() - startTime;
   logger.error(formatHealFail(hints, totalElapsed));
- 
+
   return { locator, healed: false, strategy: "primary", confidence: 0 };
 }
